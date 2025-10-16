@@ -2,6 +2,7 @@
 
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Http\Request;
+use Dotenv\Dotenv;
 
 define('LARAVEL_START', microtime(true));
 
@@ -43,6 +44,12 @@ require __DIR__.'/../vendor/autoload.php';
 | to this client's browser, allowing them to enjoy our application.
 |
 */
+
+$basePath = dirname(__DIR__);
+$envFile  = file_exists($basePath . '/.env.dev') ? '.env.dev' : '.env';
+
+$dotenv = Dotenv::createUnsafeImmutable($basePath, $envFile);
+$dotenv->load();
 
 $app = require_once __DIR__.'/../bootstrap/app.php';
 

@@ -185,4 +185,6 @@ return [
         // 'Example' => App\Facades\Example::class,
     ])->toArray(),
 
+    // Custom application configurations
+    'api_auth_token' => env('API_AUTH_TOKEN'),
 ];
