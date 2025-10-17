@@ -19,6 +19,9 @@ class ApiTokenAuth
     public function handle(Request $request, Closure $next): Response
     {
         $providedToken = $request->bearerToken() ?? $request->header('X-API-TOKEN');
+        if ($providedToken && str_starts_with(strtolower($providedToken), 'bearer ')) {
+            $providedToken = trim(substr($providedToken, 7));
+        }
         $expectedToken = config('app.api_auth_token');
 
         if (!$providedToken || $providedToken !== $expectedToken) {
