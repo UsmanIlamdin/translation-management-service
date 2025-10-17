@@ -45,12 +45,6 @@ require __DIR__.'/../vendor/autoload.php';
 |
 */
 
-$basePath = dirname(__DIR__);
-$envFile  = file_exists($basePath . '/.env.dev') ? '.env.dev' : '.env';
-
-$dotenv = Dotenv::createUnsafeImmutable($basePath, $envFile);
-$dotenv->load();
-
 $app = require_once __DIR__.'/../bootstrap/app.php';
 
 $kernel = $app->make(Kernel::class);
