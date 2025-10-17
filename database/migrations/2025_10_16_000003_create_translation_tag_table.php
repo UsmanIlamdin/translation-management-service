@@ -11,23 +11,21 @@ return new class extends Migration
         Schema::create('translation_tag', function (Blueprint $table) {
             $table->unsignedBigInteger('translation_id');
             $table->unsignedBigInteger('tag_id');
-            $table->timestamps();
 
-            // Foreign keys with cascades
             $table->foreign('translation_id', 'fk_translation_tag_translation')
-                ->references('id')->on('translations')
+                ->references('id')->on('translation')
                 ->onDelete('cascade');
 
             $table->foreign('tag_id', 'fk_translation_tag_tag')
-                ->references('id')->on('tags')
+                ->references('id')->on('tag')
                 ->onDelete('cascade');
 
-            // Composite primary key
             $table->primary(['translation_id', 'tag_id'], 'pk_translation_tag');
 
-            // Individual indexes for performance
             $table->index('translation_id', 'idx_translation_tag_translation_id');
             $table->index('tag_id', 'idx_translation_tag_tag_id');
+
+            $table->index(['tag_id', 'translation_id'], 'idx_tag_lookup');
         });
     }
 

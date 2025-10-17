@@ -3,14 +3,24 @@
 namespace App\Repositories;
 
 use App\Models\Translation;
+use Illuminate\Contracts\Pagination\Paginator;
+use Illuminate\Database\Eloquent\Builder;
+
 
 class TranslationRepository implements TranslationRepositoryInterface
 {
-    public function getAll(){
-        return Translation::all();
+    public function baseQuery(): Builder
+    {
+        return Translation::query()->with('tags');
     }
 
-    public function getById($id){
+    public function paginate(Builder $query, int $perPage): Paginator
+    {
+        return $query->simplePaginate($perPage);
+    }
+
+    public function getById($id): Translation
+    {
         return Translation::findOrFail($id);
     }
 
