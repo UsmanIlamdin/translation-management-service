@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Constants\MessageConstants;
+use App\Filters\TranslationFilters;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\TranslationResource;
 use App\Services\TranslationService;
+use App\Validator\TranslationRequestValidator;
 use Illuminate\Http\Request;
 
 class TranslationController extends Controller
@@ -11,113 +15,85 @@ class TranslationController extends Controller
     protected TranslationService $translationService;
 
     /**
-     * Inject the TranslationService.
+     * @param TranslationService $translationService
      */
     public function __construct(TranslationService $translationService)
     {
         $this->translationService = $translationService;
     }
 
-    /**
-     * Display a listing of translations.
-     */
-    public function index()
-    {
-        // Return all translations using the service
-        $translations = $this->translationService->getAllTranslations();
 
+    /**
+     * @param Request $request
+     * @param string|null $locale
+     * @param string|null $tag
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function index(Request $request, ?string $locale = null, ?string $tag = null)
+    {
+        $filters = new TranslationFilters($request, $locale, $tag);
+        $translations = $this->translationService->getFilteredTranslations($filters);
         return response()->json([
-            'status' => 200,
-            'data' => $translations,
-        ]);
+            'success' => true,
+            'meta' => [
+                'current_page'   => $translations->currentPage(),
+                'per_page'       => $translations->perPage(),
+                'next_page_url'  => $translations->nextPageUrl(),
+                'prev_page_url'  => $translations->previousPageUrl(),
+                'has_more_pages' => $translations->hasMorePages(),
+            ],
+            'data' => TranslationResource::collection($translations),
+        ], 200);
     }
 
     /**
-     * Store a newly created translation.
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'locale' => 'required|string|max:10',
-            'key' => 'required|string|max:255',
-            'content' => 'required|string',
-            'tags' => 'sometimes|array',
-            'tags.*' => 'string|max:50',
-        ]);
-
+        $validated = (new TranslationRequestValidator($request->all()))->validate();
         $translation = $this->translationService->createTranslation($validated);
 
         return response()->json([
-            'status' => 201,
-            'data' => $translation,
-        ]);
+            'success' => true,
+            'data' => new TranslationResource($translation)
+        ], 201);
     }
 
     /**
-     * Display the specified translation.
-     */
-    public function show(string $id)
-    {
-        $translation = $this->translationService->getTranslationById($id);
-
-        if (!$translation) {
-            return response()->json([
-                'status' => 404,
-                'message' => 'Translation not found',
-            ], 404);
-        }
-
-        return response()->json([
-            'status' => 200,
-            'data' => $translation,
-        ]);
-    }
-
-    /**
-     * Update the specified translation.
+     * @param Request $request
+     * @param string $id
+     * @return \Illuminate\Http\JsonResponse
      */
     public function update(Request $request, string $id)
     {
-        $validated = $request->validate([
-            'locale' => 'sometimes|string|max:10',
-            'key' => 'sometimes|string|max:255',
-            'content' => 'sometimes|string',
-            'tags' => 'sometimes|array',
-            'tags.*' => 'string|max:50',
-        ]);
-
-        $updated = $this->translationService->updateTranslation($id, $validated);
-
-        if (!$updated) {
+        $validated = (new TranslationRequestValidator($request->all(), $id))->validate();
+        $translation = $this->translationService->updateTranslation($id, $validated);
+        if (!$translation) {
             return response()->json([
-                'status' => 404,
-                'message' => 'Translation not found',
+                'success' => false,
+                'message' => MessageConstants::NOT_FOUND
             ], 404);
         }
 
         return response()->json([
-            'status' => 200,
-            'data' => $updated,
+            'success' => true,
+            'data' => new TranslationResource($translation)
         ]);
     }
 
     /**
-     * Remove the specified translation.
+     * @param string $id
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy(string $id)
     {
-        $deleted = $this->translationService->deleteTranslation($id);
-
-        if (!$deleted) {
-            return response()->json([
-                'status' => 404,
-                'message' => 'Translation not found',
-            ], 404);
-        }
+        $this->translationService->deleteTranslation($id);
 
         return response()->json([
-            'status' => 200,
-            'message' => 'Translation deleted successfully',
-        ]);
+            'status' => true,
+            'data' => null
+        ], 204);
     }
 }

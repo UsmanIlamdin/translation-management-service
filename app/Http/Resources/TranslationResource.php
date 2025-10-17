@@ -14,6 +14,12 @@ class TranslationResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            'id' => $this->id,
+            'locale' => $this->locale,
+            'key' => $this->key,
+            'content' => $this->content,
+            'tags' => $this->tags->pluck('name'),
+        ];
     }
 }
