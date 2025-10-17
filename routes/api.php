@@ -12,9 +12,12 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
-Route::middleware('auth.token')->group(function () {
-    Route::get('/', [\App\Http\Controllers\TranslationController::class, 'index']);
-    Route::post('/translations', [\App\Http\Controllers\TranslationController::class, 'store']);
-    Route::put('/translations/{id}', [\App\Http\Controllers\TranslationController::class, 'update']);
+
+Route::get('/health', [\App\Http\Controllers\Api\IndexController::class, 'health']);
+
+Route::middleware(['api', 'auth.token'])->group(function () {
+    Route::get('/translations', [\App\Http\Controllers\Api\TranslationController::class, 'index']);
+    Route::post('/translations', [\App\Http\Controllers\Api\TranslationController::class, 'store']);
+    Route::put('/translations/{id}', [\App\Http\Controllers\Api\TranslationController::class, 'update']);
 });
 
