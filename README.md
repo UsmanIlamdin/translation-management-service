@@ -202,8 +202,10 @@ http://localhost:9000/translations/i18n/en/web.json
 ![S3 Storage Export Example1](storage/S3-Storage-1.png)
 ![S3 Storage Export Example2](storage/S3-Storage-2.png)
 ![S3 Storage Export Example2](storage/S3-Storage-3.png)
-![Json Example 1 with Key Values](storage/mobile.json)
-![Json Example 2 with Key Values](storage/admin.json)
+- **JSON Examples with Key-Value Pairs:**
+  - [Mobile Translations JSON](storage/mobile.json)
+  - [Admin Translations JSON](storage/admin.json)
+
 
 ## 13. Common Commands
 
@@ -214,5 +216,25 @@ http://localhost:9000/translations/i18n/en/web.json
 | `docker exec -it translation_app bash` | Enter app container                      |
 | `php artisan migrate`                  | Run database migrations                  |
 | `php artisan db:seed`                  | Seed database                            |
+
+## 14. API Guide
+
+- **Download the Postman collection and environment variables:**
+  - [Translation Engine Postman Collection (JSON)](storage/Translation%20Engine.postman_collection.json)
+  - [Postman Environment Variables (JSON)](Dev.postman_environment.json)
+
+- **Setup Instructions:**
+  1. Import the Postman collection and environment JSON files into Postman.
+  2. Update the environment variables according to your local setup.
+     - The API token can be found in your `.env` file under the key `API_AUTH_TOKEN`.
+  3. Set the host variable to your Laravel application:
+     ```
+     http://localhost:8080/
+     ```
+  4. Once imported and configured, you can use Postman to test all the Translation Engine APIs.
+
+- **Notes:**
+  - The collection includes all endpoints for managing translations (create, update, delete, export, etc.).
+  - Environment variables are used to store sensitive data like `API_AUTH_TOKEN` and host URLs for easier testing across environments.
 
 ---
