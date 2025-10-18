@@ -1,10 +1,12 @@
 # 🛠 Translation Service - Setup & Migration
 
-This guide will help you set up the Laravel Translation Service project using Docker, configure the database, MinIO CDN, run migrations, and seed the translation tables.
+This guide will help you set up the **Laravel Translation Service** project using Docker, configure the database, MinIO CDN, run migrations, and seed the translation tables.  
+
+The project allows you to **manage translations** in the database (CRUD), and export them as JSON files to a MinIO (S3-compatible) CDN. Exported translations are **segregated by locale and tag** and publicly accessible for frontend applications (e.g., Vue.js).
 
 ---
 
-## **1. Prerequisites**
+## 1. Prerequisites
 
 Make sure you have installed:
 
@@ -13,7 +15,7 @@ Make sure you have installed:
 
 ---
 
-## **2. Project Structure**
+## 2. Project Structure
 
 ```
 
@@ -37,26 +39,26 @@ project-root/
 
 ---
 
-## **3. Docker Compose Services**
+## 3. Docker Compose Services
 
-| Service | Port | Description |
-|---------|------|-------------|
-| **app** | - | PHP-FPM Laravel Application |
-| **nginx** | 8080:80 | Nginx Web Server |
-| **db** | 3308:3306 | MySQL 9 Database |
-| **cdn** | 9000, 9001 | MinIO (S3-Compatible Local CDN) |
+| Service | Port        | Description                        |
+|---------|------------|------------------------------------|
+| **app**   | -          | PHP-FPM Laravel Application       |
+| **nginx** | 8080:80    | Nginx Web Server                  |
+| **db**    | 3308:3306  | MySQL 9 Database                  |
+| **cdn**   | 9000, 9001 | MinIO (S3-Compatible Local CDN)  |
 
-Volumes:
+**Volumes:**
 
 - `./storage` → `/var/www/html/storage` (persistent Laravel storage)
 - `mysql_data` → `/var/lib/mysql`
 - `minio_data` → `/data`
 
-Network: `translation_network` (bridge) with fixed IPs.
+**Network:** `translation_network` (bridge) with static IPs.
 
 ---
 
-## **4. Environment Configuration**
+## 4. Environment Configuration
 
 1. Copy `.env.example` to `.env`:
 
@@ -68,7 +70,7 @@ cp .env.example .env
 
 ```dotenv
 DB_CONNECTION=mysql
-DB_HOST=db
+DB_HOST=172.29.0.2
 DB_PORT=3306
 DB_DATABASE=translation_service
 DB_USERNAME=laravel
@@ -84,15 +86,15 @@ AWS_ACCESS_KEY_ID=minioadmin
 AWS_SECRET_ACCESS_KEY=minioadmin
 AWS_DEFAULT_REGION=us-east-1
 AWS_BUCKET=translations
-AWS_ENDPOINT=http://cdn:9000
 AWS_USE_PATH_STYLE_ENDPOINT=true
+AWS_ENDPOINT=http://172.29.0.12:9000
 ```
 
-> Use the internal Docker hostname `cdn` for MinIO access inside the container.
+> Use the internal Docker hostname `172.29.0.12` for MinIO access **inside the container**.
 
 ---
 
-## **5. Start Docker Containers**
+## 5. Start Docker Containers
 
 ```bash
 docker-compose up -d
@@ -113,7 +115,7 @@ Expected containers:
 
 ---
 
-## **6. Install Dependencies**
+## 6. Install Dependencies
 
 Enter the app container:
 
@@ -135,7 +137,7 @@ php artisan key:generate
 
 ---
 
-## **7. Run Migrations**
+## 7. Run Migrations
 
 Run the translation tables migration:
 
@@ -151,32 +153,7 @@ Tables created:
 
 ---
 
-## **8. Run Seeder**
-
-Seed sample translations for testing:
-
-```bash
-php artisan db:seed --class=TranslationSeeder
-```
-
-Example `TranslationSeeder.php`:
-
-```php
-use Illuminate\Database\Seeder;
-use App\Models\Translation;
-
-class TranslationSeeder extends Seeder
-{
-    public function run()
-    {
-        Translation::factory()->count(100000)->create(); // generates 100k translations
-    }
-}
-```
-
----
-
-## **9. Verify Database**
+## 8. Verify Database
 
 Connect to MySQL container:
 
@@ -193,25 +170,44 @@ SELECT COUNT(*) FROM translation;
 
 ---
 
-## **10. Accessing Files**
+## 9. Create Bucket in MinIO Object Storage
 
-* All translation JSON files are stored in `/storage/app/i18n` inside the container.
+1. Open MinIO console in browser: [http://localhost:9001](http://localhost:9001)
+2. Log in with credentials from Step 4 (`minioadmin:minioadmin`)
+3. Create a bucket named as in your `.env` file (`translations`)
+4. Set bucket to **public** for anonymous access:
+
+```bash
+mc alias set localminio http://localhost:9000 minioadmin minioadmin
+mc anonymous set public localminio/translations
+```
+
+---
+
+## 10. Accessing Files
+
 * Use `Storage::disk('s3')` in Laravel to upload/export files to MinIO.
 * Example exported file path:
-
-```
-/var/www/html/storage/app/i18n/en/web.json
-```
-
-* Access via S3 URL:
 
 ```
 http://localhost:9000/translations/i18n/en/web.json
 ```
 
+* The export endpoint returns public URLs of the uploaded files.
+
 ---
 
-## **11. Common Commands**
+## 12. Sample Export Screenshot
+
+![S3 Storage Export Example1](storage/S3-Storage-1.png)
+![S3 Storage Export Example2](storage/S3-Storage-2.png)
+![S3 Storage Export Example2](storage/S3-Storage-3.png)
+- **JSON Examples with Key-Value Pairs:**
+  - [Mobile Translations JSON](storage/mobile.json)
+  - [Admin Translations JSON](storage/admin.json)
+
+
+## 13. Common Commands
 
 | Command                                | Description                              |
 | -------------------------------------- | ---------------------------------------- |
@@ -220,6 +216,25 @@ http://localhost:9000/translations/i18n/en/web.json
 | `docker exec -it translation_app bash` | Enter app container                      |
 | `php artisan migrate`                  | Run database migrations                  |
 | `php artisan db:seed`                  | Seed database                            |
-| `php artisan tinker`                   | Interactively test Laravel models & code |
+
+## 14. API Guide
+
+- **Download the Postman collection and environment variables:**
+  - [Translation Engine Postman Collection (JSON)](storage/Translation%20Engine.postman_collection.json)
+  - [Postman Environment Variables (JSON)](Dev.postman_environment.json)
+
+- **Setup Instructions:**
+  1. Import the Postman collection and environment JSON files into Postman.
+  2. Update the environment variables according to your local setup.
+     - The API token can be found in your `.env` file under the key `API_AUTH_TOKEN`.
+  3. Set the host variable to your Laravel application:
+     ```
+     http://localhost:8080/
+     ```
+  4. Once imported and configured, you can use Postman to test all the Translation Engine APIs.
+
+- **Notes:**
+  - The collection includes all endpoints for managing translations (create, update, delete, export, etc.).
+  - Environment variables are used to store sensitive data like `API_AUTH_TOKEN` and host URLs for easier testing across environments.
 
 ---
