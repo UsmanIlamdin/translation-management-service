@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Filters\TranslationFilters;
+use App\Models\Tag;
+use App\Models\Translation;
 use App\Repositories\TranslationRepository;
 use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -23,7 +25,7 @@ class TranslationService implements TranslationServiceInterface
      * @param TranslationFilters $filters
      * @return Paginator
      */
-    public function getFilteredTranslations(TranslationFilters $filters)
+    public function getFilteredTranslations(TranslationFilters $filters): Paginator
     {
         $query = $this->translationRepository->baseQuery();
         $filters->apply($query);
@@ -35,11 +37,11 @@ class TranslationService implements TranslationServiceInterface
      * @param array $validated
      * @return mixed
      */
-    public function createTranslation(array $validated)
+    public function createTranslation(array $validated): mixed
     {
         $translation = $this->translationRepository->store($validated);
         $tagIds = collect($validated['tags'])->map(function ($name) {
-            return \App\Models\Tag::firstOrCreate(['name' => $name])->id;
+            return Tag::firstOrCreate(['name' => $name])->id;
         });
         $translation->tags()->sync($tagIds);
 
@@ -49,9 +51,9 @@ class TranslationService implements TranslationServiceInterface
     /**
      * @param int $id
      * @param array $validated
-     * @return \App\Models\Translation|null
+     * @return Translation|null
      */
-    public function updateTranslation(int $id, array $validated)
+    public function updateTranslation(int $id, array $validated): Translation|null
     {
         try {
             $translation = $this->translationRepository->getById($id);
@@ -66,8 +68,7 @@ class TranslationService implements TranslationServiceInterface
 
         if (isset($validated['tags'])) {
             $tagIds = collect($validated['tags'])->map(fn($name) =>
-            \App\Models\Tag::firstOrCreate(['name' => $name])->id
-            );
+            Tag::firstOrCreate(['name' => $name])->id);
             $translation->tags()->sync($tagIds);
         }
 
@@ -78,7 +79,7 @@ class TranslationService implements TranslationServiceInterface
      * @param int $id
      * @return void
      */
-    public function deleteTranslation(int $id)
+    public function deleteTranslation(int $id): void
     {
         $translation = $this->translationRepository->getById($id);
         $translation->tags()->detach();

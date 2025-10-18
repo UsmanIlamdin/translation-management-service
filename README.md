@@ -1,66 +1,225 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🛠 Translation Service - Setup & Migration
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+This guide will help you set up the Laravel Translation Service project using Docker, configure the database, MinIO CDN, run migrations, and seed the translation tables.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## **1. Prerequisites**
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Make sure you have installed:
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- [Docker](https://docs.docker.com/get-docker/) & [Docker Compose](https://docs.docker.com/compose/install/)
+- Git
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## **2. Project Structure**
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+project-root/
+├─ docker/
+│  ├─ app/
+│  │  └─ Dockerfile
+│  ├─ nginx/
+│  │  └─ Dockerfile
+│  └─ mysql/
+│     └─ conf.d/
+├─ storage/
+├─ database/
+│  ├─ migrations/
+│  └─ seeders/
+├─ app/
+├─ config/
+└─ docker-compose.yml
 
-## Laravel Sponsors
+````
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+---
 
-### Premium Partners
+## **3. Docker Compose Services**
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+| Service | Port | Description |
+|---------|------|-------------|
+| **app** | - | PHP-FPM Laravel Application |
+| **nginx** | 8080:80 | Nginx Web Server |
+| **db** | 3308:3306 | MySQL 9 Database |
+| **cdn** | 9000, 9001 | MinIO (S3-Compatible Local CDN) |
 
-## Contributing
+Volumes:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- `./storage` → `/var/www/html/storage` (persistent Laravel storage)
+- `mysql_data` → `/var/lib/mysql`
+- `minio_data` → `/data`
 
-## Code of Conduct
+Network: `translation_network` (bridge) with fixed IPs.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+---
 
-## Security Vulnerabilities
+## **4. Environment Configuration**
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+1. Copy `.env.example` to `.env`:
 
-## License
+```bash
+cp .env.example .env
+````
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+2. Update database configuration:
+
+```dotenv
+DB_CONNECTION=mysql
+DB_HOST=db
+DB_PORT=3306
+DB_DATABASE=translation_service
+DB_USERNAME=laravel
+DB_PASSWORD=laravel
+```
+
+3. Update MinIO configuration:
+
+```dotenv
+FILESYSTEM_DRIVER=s3
+
+AWS_ACCESS_KEY_ID=minioadmin
+AWS_SECRET_ACCESS_KEY=minioadmin
+AWS_DEFAULT_REGION=us-east-1
+AWS_BUCKET=translations
+AWS_ENDPOINT=http://cdn:9000
+AWS_USE_PATH_STYLE_ENDPOINT=true
+```
+
+> Use the internal Docker hostname `cdn` for MinIO access inside the container.
+
+---
+
+## **5. Start Docker Containers**
+
+```bash
+docker-compose up -d
+```
+
+Check running containers:
+
+```bash
+docker ps
+```
+
+Expected containers:
+
+* `translation_app`
+* `translation_nginx`
+* `translation_db`
+* `translation_cdn`
+
+---
+
+## **6. Install Dependencies**
+
+Enter the app container:
+
+```bash
+docker exec -it translation_app bash
+```
+
+Install PHP dependencies:
+
+```bash
+composer install
+```
+
+Generate application key:
+
+```bash
+php artisan key:generate
+```
+
+---
+
+## **7. Run Migrations**
+
+Run the translation tables migration:
+
+```bash
+php artisan migrate
+```
+
+Tables created:
+
+* `translation`
+* `tag`
+* `translation_tag`
+
+---
+
+## **8. Run Seeder**
+
+Seed sample translations for testing:
+
+```bash
+php artisan db:seed --class=TranslationSeeder
+```
+
+Example `TranslationSeeder.php`:
+
+```php
+use Illuminate\Database\Seeder;
+use App\Models\Translation;
+
+class TranslationSeeder extends Seeder
+{
+    public function run()
+    {
+        Translation::factory()->count(100000)->create(); // generates 100k translations
+    }
+}
+```
+
+---
+
+## **9. Verify Database**
+
+Connect to MySQL container:
+
+```bash
+docker exec -it translation_db mysql -u laravel -plaravel translation_service
+```
+
+Check tables:
+
+```sql
+SHOW TABLES;
+SELECT COUNT(*) FROM translation;
+```
+
+---
+
+## **10. Accessing Files**
+
+* All translation JSON files are stored in `/storage/app/i18n` inside the container.
+* Use `Storage::disk('s3')` in Laravel to upload/export files to MinIO.
+* Example exported file path:
+
+```
+/var/www/html/storage/app/i18n/en/web.json
+```
+
+* Access via S3 URL:
+
+```
+http://localhost:9000/translations/i18n/en/web.json
+```
+
+---
+
+## **11. Common Commands**
+
+| Command                                | Description                              |
+| -------------------------------------- | ---------------------------------------- |
+| `docker-compose up -d`                 | Start all services in detached mode      |
+| `docker-compose down`                  | Stop all containers                      |
+| `docker exec -it translation_app bash` | Enter app container                      |
+| `php artisan migrate`                  | Run database migrations                  |
+| `php artisan db:seed`                  | Seed database                            |
+| `php artisan tinker`                   | Interactively test Laravel models & code |
+
+---

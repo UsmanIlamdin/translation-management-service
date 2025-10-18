@@ -4,6 +4,7 @@ namespace App\Validator;
 
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class TranslationRequestValidator
 {
@@ -16,6 +17,10 @@ class TranslationRequestValidator
         $this->id = $id;
     }
 
+    /**
+     * @return array
+     * @throws ValidationException
+     */
     public function validate(): array
     {
         $rules = [

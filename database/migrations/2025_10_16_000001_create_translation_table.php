@@ -16,8 +16,6 @@ return new class extends Migration {
 
             $table->unique(['locale', 'key'], 'uniq_translation_locale_key');
         });
-
-        DB::statement('ALTER TABLE translation ADD FULLTEXT idx_translation_content (content)');
     }
 
     public function down(): void
