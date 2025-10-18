@@ -197,7 +197,15 @@ http://localhost:9000/translations/i18n/en/web.json
 
 ---
 
-## 11. Common Commands
+## 12. Sample Export Screenshot
+
+![S3 Storage Export Example1](storage/S3-Storage-1.png)
+![S3 Storage Export Example2](storage/S3-Storage-2.png)
+![S3 Storage Export Example2](storage/S3-Storage-3.png)
+![Json Example 1 with Key Values](storage/mobile.json)
+![Json Example 2 with Key Values](storage/admin.json)
+
+## 13. Common Commands
 
 | Command                                | Description                              |
 | -------------------------------------- | ---------------------------------------- |
