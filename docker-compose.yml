@@ -12,6 +12,7 @@ services:
             SERVICE_NAME: translation_app
         volumes:
             - ./:/var/www/html
+            - ./storage:/var/www/html/storage
         depends_on:
             - db
             - cdn

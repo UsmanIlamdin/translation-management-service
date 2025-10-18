@@ -8,7 +8,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\TranslationResource;
 use App\Services\TranslationService;
 use App\Validator\TranslationRequestValidator;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class TranslationController extends Controller
 {
@@ -27,9 +29,9 @@ class TranslationController extends Controller
      * @param Request $request
      * @param string|null $locale
      * @param string|null $tag
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
-    public function index(Request $request, ?string $locale = null, ?string $tag = null)
+    public function index(Request $request, ?string $locale = null, ?string $tag = null): JsonResponse
     {
         $filters = new TranslationFilters($request, $locale, $tag);
         $translations = $this->translationService->getFilteredTranslations($filters);
@@ -43,14 +45,14 @@ class TranslationController extends Controller
                 'has_more_pages' => $translations->hasMorePages(),
             ],
             'data' => TranslationResource::collection($translations),
-        ], 200);
+        ], Response::HTTP_OK);
     }
 
     /**
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         $validated = (new TranslationRequestValidator($request->all()))->validate();
         $translation = $this->translationService->createTranslation($validated);
@@ -58,15 +60,15 @@ class TranslationController extends Controller
         return response()->json([
             'success' => true,
             'data' => new TranslationResource($translation)
-        ], 201);
+        ], Response::HTTP_CREATED);
     }
 
     /**
      * @param Request $request
      * @param string $id
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, string $id): JsonResponse
     {
         $validated = (new TranslationRequestValidator($request->all(), $id))->validate();
         $translation = $this->translationService->updateTranslation($id, $validated);
@@ -74,26 +76,26 @@ class TranslationController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => MessageConstants::NOT_FOUND
-            ], 404);
+            ], Response::HTTP_NOT_FOUND);
         }
 
         return response()->json([
             'success' => true,
             'data' => new TranslationResource($translation)
-        ]);
+        ], Response::HTTP_OK);
     }
 
     /**
      * @param string $id
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
-    public function destroy(string $id)
+    public function destroy(string $id): JsonResponse
     {
         $this->translationService->deleteTranslation($id);
 
         return response()->json([
             'status' => true,
             'data' => null
-        ], 204);
+        ], Response::HTTP_NO_CONTENT);
     }
 }

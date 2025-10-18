@@ -11,6 +11,11 @@ class TranslationFilters
     protected ?string $tag;
     protected int $perPage;
 
+    /**
+     * @param Request $request
+     * @param string|null $locale
+     * @param string|null $tag
+     */
     public function __construct(Request $request, ?string $locale = null, ?string $tag = null)
     {
         $this->locale = $locale;
@@ -18,6 +23,10 @@ class TranslationFilters
         $this->perPage = (int) $request->query('per_page', 15);
     }
 
+    /**
+     * @param Builder $query
+     * @return Builder
+     */
     public function apply(Builder $query): Builder
     {
         if (!empty($this->locale)) {
@@ -31,6 +40,9 @@ class TranslationFilters
         return $query;
     }
 
+    /**
+     * @return int
+     */
     public function getPerPage(): int
     {
         return $this->perPage;
