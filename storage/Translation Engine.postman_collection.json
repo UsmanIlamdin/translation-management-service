@@ -1,0 +1,229 @@
+{
+	"info": {
+		"_postman_id": "c4ccac96-2ec8-4477-bfe4-7f3c1bba8834",
+		"name": "Translation Engine",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "38734872"
+	},
+	"item": [
+		{
+			"name": "[GET] Service Discovery",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": "{{translationEngineHost}}/health",
+				"description": "### **Response Example**\n\n``` json\n{\n    \"status\": \"success\",\n    \"message\": \"Service is running\",\n    \"uptime\": \"2 hours 15 minutes\",\n    \"database\": \"connected\",\n    \"cdn\": \"connected\"\n}\n\n ```\n\n### **Response Fields**\n\n| Field | Type | Description |\n| --- | --- | --- |\n| `status` | string | Indicates if the service is up (`success`) or down (`fail`) |\n| `message` | string | Human-readable status message |\n| `uptime` | string | Optional: how long the service has been running |\n| `database` | string | Status of database connection (`connected` or `disconnected`) |\n| `cdn` | string | Status of CDN (MinIO) connectivity |\n\n### **Usage**\n\n- Use in **health monitoring dashboards** or **container orchestration** (e.g., Kubernetes `livenessProbe` and `readinessProbe`).\n    \n- Can be polled by external services to **verify that the application, database, and CDN are reachable**."
+			},
+			"response": []
+		},
+		{
+			"name": "[GET] Paginated List Of Translations",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {
+						"token": "{{translationEngineAPIToken}}"
+					}
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{translationEngineHost}}/translations?per_page=10&page=2",
+					"host": [
+						"{{translationEngineHost}}"
+					],
+					"path": [
+						"translations"
+					],
+					"query": [
+						{
+							"key": "per_page",
+							"value": "10"
+						},
+						{
+							"key": "page",
+							"value": "2"
+						}
+					]
+				},
+				"description": "Return all the translation list using pagination."
+			},
+			"response": []
+		},
+		{
+			"name": "[GET] Export the Translation To Json",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {
+						"token": "{{translationEngineAPIToken}}"
+					}
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{translationEngineHost}}/translations/export/json?locale=en,fr&tags=web,mobile",
+					"host": [
+						"{{translationEngineHost}}"
+					],
+					"path": [
+						"translations",
+						"export",
+						"json"
+					],
+					"query": [
+						{
+							"key": "locale",
+							"value": "en,fr"
+						},
+						{
+							"key": "tags",
+							"value": "web,mobile"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[GET] Local Specific Paginated Translation List",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {
+						"token": "{{translationEngineAPIToken}}"
+					}
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{translationEngineHost}}/translations/en?per_page=1000&page=2",
+					"host": [
+						"{{translationEngineHost}}"
+					],
+					"path": [
+						"translations",
+						"en"
+					],
+					"query": [
+						{
+							"key": "per_page",
+							"value": "1000"
+						},
+						{
+							"key": "page",
+							"value": "2"
+						}
+					]
+				},
+				"description": "Retrieve a **paginated list of translations** from the database"
+			},
+			"response": []
+		},
+		{
+			"name": "[GET] Tag Specific Paginated Translation List",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {
+						"token": "{{translationEngineAPIToken}}"
+					}
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{translationEngineHost}}/translations/en/tags/web?per_page=1000&page=2",
+					"host": [
+						"{{translationEngineHost}}"
+					],
+					"path": [
+						"translations",
+						"en",
+						"tags",
+						"web"
+					],
+					"query": [
+						{
+							"key": "per_page",
+							"value": "1000"
+						},
+						{
+							"key": "page",
+							"value": "2"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[POST] Create New Translation",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {
+						"token": "{{translationEngineAPIToken}}"
+					}
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"locale\": \"en\",\n    \"key\": \"welcome_message_4\",\n    \"content\": \"Welcome to our platform!\",\n    \"tags\": [\"web\", \"mobile\"]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{translationEngineHost}}/translations",
+				"description": "Create new translation"
+			},
+			"response": []
+		},
+		{
+			"name": "[POST] UpdateTranslation",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {
+						"token": "{{translationEngineAPIToken}}"
+					}
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"locale\": \"en\",\n    \"key\": \"welcome_message_4\",\n    \"content\": \"Welcome to our platform!\",\n    \"tags\": [\"web\", \"mobile\",\"admin\"]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{translationEngineHost}}/translations/100004",
+				"description": "Upate Translation"
+			},
+			"response": []
+		},
+		{
+			"name": "[POST] Delete Translation",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {
+						"token": "{{translationEngineAPIToken}}"
+					}
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": "{{translationEngineHost}}/translations/100004",
+				"description": "Delete Translation By ID"
+			},
+			"response": []
+		}
+	]
+}
